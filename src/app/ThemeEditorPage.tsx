@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ContrastWarning } from '../domain/validation/analyzeContrast'
 import { serializeThemeFile } from '../domain/opencode/exportTheme'
-import type { ThemeTokenName } from '../domain/theme/model'
+import type { ThemeMode, ThemeTokenName } from '../domain/theme/model'
 import { AdvancedTokenEditor } from '../features/editor/AdvancedTokenEditor'
 import { ContrastGuidance } from '../features/editor/ContrastGuidance'
 import { JsonThemeEditor } from '../features/editor/JsonThemeEditor'
@@ -12,6 +12,7 @@ import { PreviewSurface } from '../features/preview/PreviewSurface'
 import { useDraftPersistenceStatus } from '../state/persistence-status'
 import {
   selectContrastWarnings,
+  selectExportCombinedThemeFile,
   selectEditorSemanticGroups,
   selectExportThemeFile,
   selectPreviewModel,
@@ -32,6 +33,7 @@ export function ThemeEditorPage() {
   const resolvedTokens = useMemo(() => selectResolvedMode(draft, draft.activeMode), [draft])
   const tokenNames = useMemo(() => Object.keys(resolvedTokens) as ThemeTokenName[], [resolvedTokens])
   const activeModeThemeFile = useMemo(() => selectExportThemeFile(draft, draft.activeMode), [draft])
+  const combinedThemeFile = useMemo(() => selectExportCombinedThemeFile(draft), [draft])
   const themeSlug = useMemo(
     () => draft.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'theme',
     [draft.name],
@@ -64,6 +66,10 @@ export function ThemeEditorPage() {
     const themeFile = selectExportThemeFile(draft, mode)
 
     downloadThemeFile(`${exportThemeSlug}.${mode}.json`, serializeThemeFile(themeFile))
+  }
+
+  function exportCombined() {
+    downloadThemeFile(`${exportThemeSlug}.json`, serializeThemeFile(combinedThemeFile))
   }
 
   function fixContrastIssue(warning: ContrastWarning) {
@@ -152,18 +158,31 @@ export function ThemeEditorPage() {
           ) : (
             <JsonThemeEditor
               themeFile={activeModeThemeFile}
+              combinedThemeFile={combinedThemeFile}
               tokenNames={tokenNames}
-              onChange={(themeFile) => {
-                const hasChanges = tokenNames.some((token) => activeModeThemeFile.theme[token] !== themeFile.theme[token])
+              activeMode={draft.activeMode}
+              onChange={(modeThemes) => {
+                const modeOrder: ThemeMode[] = ['dark', 'light']
 
-                if (!hasChanges) {
-                  return
+                for (const mode of modeOrder) {
+                  const modeTheme = modeThemes[mode]
+
+                  if (!modeTheme) {
+                    continue
+                  }
+
+                  const currentThemeFile = selectExportThemeFile(draft, mode)
+                  const hasChanges = tokenNames.some((token) => currentThemeFile.theme[token] !== modeTheme[token])
+
+                  if (!hasChanges) {
+                    continue
+                  }
+
+                  replaceModeDraft(mode, {
+                    ...draft.modes[mode],
+                    tokenOverrides: modeTheme,
+                  })
                 }
-
-                replaceModeDraft(draft.activeMode, {
-                  ...draft.modes[draft.activeMode],
-                  tokenOverrides: themeFile.theme,
-                })
               }}
             />
           )}
@@ -195,6 +214,7 @@ export function ThemeEditorPage() {
             onThemeNameChange={setExportThemeName}
             onExportDark={() => exportMode('dark')}
             onExportLight={() => exportMode('light')}
+            onExportCombined={exportCombined}
           />
         </div>
       </aside>

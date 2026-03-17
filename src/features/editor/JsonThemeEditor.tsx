@@ -1,15 +1,32 @@
 import { useEffect, useMemo, useState } from 'react'
-import { serializeThemeFile, type OpenCodeThemeFile } from '../../domain/opencode/exportTheme'
-import type { ThemeTokenName, ThemeTokens } from '../../domain/theme/model'
+import {
+  exportCombinedThemeFile,
+  exportThemeFile,
+  serializeThemeFile,
+  type OpenCodeCombinedThemeFile,
+  type OpenCodeThemeFile,
+} from '../../domain/opencode/exportTheme'
+import type { ThemeMode, ThemeTokenName, ThemeTokens } from '../../domain/theme/model'
+
+type JsonThemeModeUpdates = Partial<Record<ThemeMode, ThemeTokens>>
 
 type JsonThemeEditorProps = {
   themeFile: OpenCodeThemeFile
+  combinedThemeFile: OpenCodeCombinedThemeFile
   tokenNames: ThemeTokenName[]
-  onChange: (themeFile: OpenCodeThemeFile) => void
+  activeMode: ThemeMode
+  onChange: (modeThemes: JsonThemeModeUpdates) => void
 }
 
 type ParseResult =
-  | { ok: true; value: OpenCodeThemeFile }
+  | {
+      ok: true
+      value: {
+        format: 'single' | 'combined'
+        themeFile: OpenCodeThemeFile | OpenCodeCombinedThemeFile
+        modeThemes: JsonThemeModeUpdates
+      }
+    }
   | { ok: false; error: string }
 
 type ResolveColorResult =
@@ -63,7 +80,7 @@ function resolveThemeTokenColor(
   return resolveThemeTokenColor(nextValue, defs, token, nextVisitedDefs)
 }
 
-function parseThemeFile(value: string, tokenNames: ThemeTokenName[]): ParseResult {
+function parseThemeFile(value: string, tokenNames: ThemeTokenName[], activeMode: ThemeMode): ParseResult {
   let parsed: unknown
 
   try {
@@ -89,19 +106,92 @@ function parseThemeFile(value: string, tokenNames: ThemeTokenName[]): ParseResul
   }
 
   const defs = (parsed.defs ?? {}) as Record<string, unknown>
+  const theme = parsed.theme as Record<string, unknown>
 
   const tokenNameSet = new Set(tokenNames)
 
-  for (const key of Object.keys(parsed.theme)) {
+  for (const key of Object.keys(theme)) {
     if (!tokenNameSet.has(key as ThemeTokenName)) {
       return { ok: false, error: `Unknown token: ${key}` }
+    }
+  }
+
+  let hasSingleModeValues = false
+  let hasCombinedModeValues = false
+
+  for (const token of tokenNames) {
+    const tokenValue = theme[token]
+
+    if (typeof tokenValue === 'string') {
+      hasSingleModeValues = true
+      continue
+    }
+
+    if (isRecord(tokenValue)) {
+      hasCombinedModeValues = true
+      continue
+    }
+
+    return {
+      ok: false,
+      error: `Token \`${token}\` must be a string or an object with \`dark\` and \`light\``,
+    }
+  }
+
+  if (hasSingleModeValues && hasCombinedModeValues) {
+    return {
+      ok: false,
+      error: '`theme` cannot mix single-mode strings with combined dark/light objects',
+    }
+  }
+
+  if (hasCombinedModeValues) {
+    const darkTheme = {} as ThemeTokens
+    const lightTheme = {} as ThemeTokens
+
+    for (const token of tokenNames) {
+      const tokenValue = theme[token]
+
+      if (!isRecord(tokenValue) || typeof tokenValue.dark !== 'string' || typeof tokenValue.light !== 'string') {
+        return {
+          ok: false,
+          error: `Token \`${token}\` must include string \`dark\` and \`light\` values`,
+        }
+      }
+
+      const resolvedDark = resolveThemeTokenColor(tokenValue.dark, defs, token)
+
+      if (!resolvedDark.ok) {
+        return { ok: false, error: resolvedDark.error }
+      }
+
+      const resolvedLight = resolveThemeTokenColor(tokenValue.light, defs, token)
+
+      if (!resolvedLight.ok) {
+        return { ok: false, error: resolvedLight.error }
+      }
+
+      darkTheme[token] = resolvedDark.value
+      lightTheme[token] = resolvedLight.value
+    }
+
+    return {
+      ok: true,
+      value: {
+        format: 'combined',
+        themeFile: exportCombinedThemeFile(darkTheme, lightTheme),
+        modeThemes: {
+          dark: darkTheme,
+          light: lightTheme,
+        },
+      },
     }
   }
 
   const nextTheme = {} as ThemeTokens
 
   for (const token of tokenNames) {
-    const tokenValue = parsed.theme[token]
+    const tokenValue = theme[token]
 
     if (typeof tokenValue !== 'string') {
       return { ok: false, error: `Token \`${token}\` must be a string` }
@@ -116,17 +206,36 @@ function parseThemeFile(value: string, tokenNames: ThemeTokenName[]): ParseResul
     nextTheme[token] = resolvedToken.value
   }
 
+  const modeThemes: JsonThemeModeUpdates = {}
+  modeThemes[activeMode] = nextTheme
+
   return {
     ok: true,
     value: {
-      $schema: 'https://opencode.ai/theme.json',
-      theme: nextTheme,
+      format: 'single',
+      themeFile: exportThemeFile(nextTheme),
+      modeThemes,
     },
   }
 }
 
-export function JsonThemeEditor({ themeFile, tokenNames, onChange }: JsonThemeEditorProps) {
-  const formattedTheme = useMemo(() => serializeThemeFile(themeFile).trimEnd(), [themeFile])
+export function JsonThemeEditor({
+  themeFile,
+  combinedThemeFile,
+  tokenNames,
+  activeMode,
+  onChange,
+}: JsonThemeEditorProps) {
+  const [format, setFormat] = useState<'single' | 'combined'>('single')
+  const formattedTheme = useMemo(
+    () =>
+      serializeThemeFile(
+        format === 'combined'
+          ? combinedThemeFile
+          : themeFile,
+      ).trimEnd(),
+    [combinedThemeFile, format, themeFile],
+  )
   const [jsonText, setJsonText] = useState(formattedTheme)
   const [parseError, setParseError] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
@@ -142,7 +251,7 @@ export function JsonThemeEditor({ themeFile, tokenNames, onChange }: JsonThemeEd
   function handleTextChange(nextValue: string) {
     setJsonText(nextValue)
 
-    const parsed = parseThemeFile(nextValue, tokenNames)
+    const parsed = parseThemeFile(nextValue, tokenNames, activeMode)
 
     if (!parsed.ok) {
       setParseError(parsed.error)
@@ -150,7 +259,8 @@ export function JsonThemeEditor({ themeFile, tokenNames, onChange }: JsonThemeEd
     }
 
     setParseError(null)
-    onChange(parsed.value)
+    setFormat(parsed.value.format)
+    onChange(parsed.value.modeThemes)
   }
 
   return (
@@ -169,13 +279,14 @@ export function JsonThemeEditor({ themeFile, tokenNames, onChange }: JsonThemeEd
           onBlur={() => {
             setIsEditing(false)
 
-            const parsed = parseThemeFile(jsonText, tokenNames)
+            const parsed = parseThemeFile(jsonText, tokenNames, activeMode)
 
             if (!parsed.ok) {
               return
             }
 
-            setJsonText(serializeThemeFile(parsed.value).trimEnd())
+            setFormat(parsed.value.format)
+            setJsonText(serializeThemeFile(parsed.value.themeFile).trimEnd())
           }}
           onChange={(event) => handleTextChange(event.target.value)}
           aria-label="Theme JSON editor"

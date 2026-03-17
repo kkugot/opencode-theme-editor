@@ -4,6 +4,7 @@ type ExportPanelProps = {
   onThemeNameChange: (value: string) => void
   onExportDark: () => void
   onExportLight: () => void
+  onExportCombined: () => void
 }
 
 export function ExportPanel({
@@ -12,6 +13,7 @@ export function ExportPanel({
   onThemeNameChange,
   onExportDark,
   onExportLight,
+  onExportCombined,
 }: ExportPanelProps) {
   return (
     <section className="export-panel panel-card">
@@ -60,6 +62,21 @@ export function ExportPanel({
           <div className="export-button-copy">
             <strong className="export-button-title">Light</strong>
             <small className="export-button-file">{`${themeSlug}.light.json`}</small>
+          </div>
+          <div className="export-button-meta">
+            <span>Export</span>
+            <span>JSON</span>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          className="export-button"
+          onClick={onExportCombined}
+        >
+          <div className="export-button-copy">
+            <strong className="export-button-title">Combined</strong>
+            <small className="export-button-file">{`${themeSlug}.json`}</small>
           </div>
           <div className="export-button-meta">
             <span>Export</span>

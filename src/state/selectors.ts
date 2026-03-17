@@ -1,5 +1,5 @@
 import { buildPreviewModel } from '../domain/preview/buildPreviewModel'
-import { exportThemeFile } from '../domain/opencode/exportTheme'
+import { exportCombinedThemeFile, exportThemeFile } from '../domain/opencode/exportTheme'
 import { resolveThemeMode } from '../domain/theme/resolveThemeMode'
 import { analyzeContrast } from '../domain/validation/analyzeContrast'
 import type { SemanticGroupName, ThemeDraft, ThemeMode, ThemeModeDraft, ThemeTokenName } from '../domain/theme/model'
@@ -68,6 +68,10 @@ export function selectPreviewModel(draft: ThemeDraft) {
 
 export function selectExportThemeFile(draft: ThemeDraft, mode: ThemeMode) {
   return exportThemeFile(selectResolvedMode(draft, mode))
+}
+
+export function selectExportCombinedThemeFile(draft: ThemeDraft) {
+  return exportCombinedThemeFile(selectResolvedMode(draft, 'dark'), selectResolvedMode(draft, 'light'))
 }
 
 export function selectContrastWarnings(draft: ThemeDraft, mode: ThemeMode) {
