@@ -280,15 +280,7 @@ input {
 }
 
 .editor-pane::after {
-  content: '';
-  position: absolute;
-  left: 24px;
-  right: 0;
-  bottom: 0;
-  height: 88px;
-  background: var(--editor-fade-background);
-  pointer-events: none;
-  z-index: 4;
+  content: none;
 }
 
 .preview-pane {
