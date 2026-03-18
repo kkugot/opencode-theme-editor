@@ -7,6 +7,11 @@ function themeReducer(state: ThemeDraft, action: ThemeStoreAction): ThemeDraft {
   switch (action.type) {
     case 'hydrate-draft':
       return action.draft
+    case 'set-draft-name':
+      return {
+        ...state,
+        name: action.name,
+      }
     case 'set-active-mode':
       return {
         ...state,

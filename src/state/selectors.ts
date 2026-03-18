@@ -39,6 +39,15 @@ export function selectResolvedMode(draft: ThemeDraft, mode: ThemeMode) {
   return resolveThemeMode(draft.modes[mode])
 }
 
+export function selectDerivedMode(draft: ThemeDraft, mode: ThemeMode) {
+  const modeDraft = draft.modes[mode]
+
+  return resolveThemeMode({
+    ...modeDraft,
+    tokenOverrides: {},
+  })
+}
+
 export function selectEditorSemanticGroups(draft: ThemeDraft, mode: ThemeMode) {
   const modeDraft = draft.modes[mode]
 

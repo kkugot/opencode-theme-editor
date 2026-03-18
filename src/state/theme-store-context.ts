@@ -3,6 +3,7 @@ import type { SemanticGroupName, ThemeDraft, ThemeMode, ThemeModeDraft, ThemeTok
 
 export type ThemeStoreAction =
   | { type: 'hydrate-draft'; draft: ThemeDraft }
+  | { type: 'set-draft-name'; name: string }
   | { type: 'set-active-mode'; mode: ThemeMode }
   | { type: 'replace-mode-draft'; mode: ThemeMode; modeDraft: ThemeModeDraft }
   | { type: 'set-semantic-group'; mode: ThemeMode; group: SemanticGroupName; value: string }

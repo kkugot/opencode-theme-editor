@@ -24,6 +24,9 @@ export function useThemeStoreActions() {
       hydrateDraft(draft: ThemeDraft) {
         dispatch({ type: 'hydrate-draft', draft })
       },
+      setDraftName(name: string) {
+        dispatch({ type: 'set-draft-name', name })
+      },
       setActiveMode(mode: ThemeMode) {
         dispatch({ type: 'set-active-mode', mode })
       },
