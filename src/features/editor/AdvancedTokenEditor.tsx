@@ -28,6 +28,7 @@ const tokenSections: Array<{
 
 type AdvancedTokenEditorProps = {
   resolvedTokens: ThemeTokens
+  derivedTokens: ThemeTokens
   overrides: Partial<ThemeTokens>
   onChange: (token: ThemeTokenName, value: string) => void
   onReset: (token: ThemeTokenName) => void
@@ -35,6 +36,7 @@ type AdvancedTokenEditorProps = {
 
 export function AdvancedTokenEditor({
   resolvedTokens,
+  derivedTokens,
   overrides,
   onChange,
   onReset,
@@ -50,7 +52,11 @@ export function AdvancedTokenEditor({
 
             <div className="advanced-grid">
               {section.tokens.map((token) => {
-                const isOverridden = overrides[token] !== undefined
+                const overrideValue = overrides[token]
+                const isOverridden = overrideValue !== undefined
+                const isInSyncWithDerived =
+                  isOverridden && overrideValue.toLowerCase() === derivedTokens[token].toLowerCase()
+                const showReset = isOverridden && !isInSyncWithDerived
                 const colorInputId = `token-color-${token}`
 
                 return (
@@ -67,7 +73,7 @@ export function AdvancedTokenEditor({
                         />
                       </label>
 
-                      {isOverridden ? (
+                      {showReset ? (
                         <button
                           type="button"
                           className="advanced-reset-icon"

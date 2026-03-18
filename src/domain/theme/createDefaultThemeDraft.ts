@@ -23,7 +23,7 @@ export function createDefaultThemeDraft(): ThemeDraft {
 
   return {
     id: 'default-draft',
-    name: 'Starter Theme',
+    name: 'Untitled',
     activeMode: 'dark',
     modes: {
       dark,
