@@ -1,0 +1,46 @@
+{
+  "scripts": [
+    {
+      "name": "dev",
+      "command": "npm run dev",
+      "mode": "service",
+      "category": "dev"
+    },
+    {
+      "name": "build",
+      "command": "npm run build",
+      "mode": "command",
+      "category": "build"
+    },
+    {
+      "name": "preview",
+      "command": "npm run preview",
+      "mode": "service",
+      "category": "dev"
+    },
+    {
+      "name": "lint",
+      "command": "npm run lint",
+      "mode": "command",
+      "category": "lint"
+    },
+    {
+      "name": "version:patch",
+      "command": "npm run version:patch",
+      "mode": "command",
+      "category": "other"
+    },
+    {
+      "name": "version:minor",
+      "command": "npm run version:minor",
+      "mode": "command",
+      "category": "other"
+    },
+    {
+      "name": "version:major",
+      "command": "npm run version:major",
+      "mode": "command",
+      "category": "other"
+    }
+  ]
+}

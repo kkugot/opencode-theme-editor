@@ -1,4 +1,5 @@
 import type { ThemeTokenName, ThemeTokens } from '../theme/model'
+import { THEME_TOKEN_NAMES } from '../theme/model'
 
 const OPENCODE_THEME_SCHEMA = 'https://opencode.ai/theme.json'
 
@@ -35,6 +36,21 @@ export function exportCombinedThemeFile(darkTokens: ThemeTokens, lightTokens: Th
     $schema: OPENCODE_THEME_SCHEMA,
     theme,
   }
+}
+
+export function expandCombinedThemeFile(themeFile: OpenCodeCombinedThemeFile) {
+  const dark = {} as ThemeTokens
+  const light = {} as ThemeTokens
+
+  for (const token of THEME_TOKEN_NAMES) {
+    dark[token] = themeFile.theme[token].dark
+    light[token] = themeFile.theme[token].light
+  }
+
+  return {
+    dark,
+    light,
+  } satisfies Record<'dark' | 'light', ThemeTokens>
 }
 
 export function serializeThemeFile(theme: OpenCodeThemeFile | OpenCodeCombinedThemeFile) {

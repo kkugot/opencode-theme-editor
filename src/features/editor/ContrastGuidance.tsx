@@ -6,8 +6,7 @@ type ContrastGuidanceProps = {
 }
 
 function buildSuggestion(warning: ContrastWarning) {
-  const delta = Math.max(0, warning.target - warning.ratio).toFixed(2)
-  return `Increase contrast by about ${delta} for ${warning.label.toLowerCase()}.`
+  return `Increase contrast toward roughly ${warning.preferredMin.toFixed(1)}-${warning.preferredMax.toFixed(1)} for ${warning.label.toLowerCase()}.`
 }
 
 export function ContrastGuidance({ warnings, onFix }: ContrastGuidanceProps) {

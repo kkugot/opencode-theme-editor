@@ -1,4 +1,4 @@
-import type { ThemeDraft, ThemeModeDraft } from './model'
+import type { ThemeDraft, ThemeMode, ThemeModeDraft } from './model'
 import { generateSiblingMode } from './resolveThemeMode'
 
 function createDarkMode(): ThemeModeDraft {
@@ -17,14 +17,14 @@ function createDarkMode(): ThemeModeDraft {
   }
 }
 
-export function createDefaultThemeDraft(): ThemeDraft {
+export function createDefaultThemeDraft(activeMode: ThemeMode = 'dark'): ThemeDraft {
   const dark = createDarkMode()
   const light = generateSiblingMode(dark, 'light')
 
   return {
     id: 'default-draft',
     name: 'Untitled',
-    activeMode: 'dark',
+    activeMode,
     modes: {
       dark,
       light,

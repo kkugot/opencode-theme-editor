@@ -1,6 +1,7 @@
 import { useMemo, useReducer, type PropsWithChildren } from 'react'
 import { createDefaultThemeDraft } from '../domain/theme/createDefaultThemeDraft'
 import type { ThemeDraft } from '../domain/theme/model'
+import { getSystemPreferredThemeMode } from './systemThemeMode'
 import { ThemeStoreContext, type ThemeStoreAction } from './theme-store-context'
 
 function themeReducer(state: ThemeDraft, action: ThemeStoreAction): ThemeDraft {
@@ -72,7 +73,7 @@ function themeReducer(state: ThemeDraft, action: ThemeStoreAction): ThemeDraft {
 }
 
 export function ThemeStoreProvider({ children }: PropsWithChildren) {
-  const [draft, dispatch] = useReducer(themeReducer, undefined, createDefaultThemeDraft)
+  const [draft, dispatch] = useReducer(themeReducer, undefined, () => createDefaultThemeDraft(getSystemPreferredThemeMode()))
 
   const value = useMemo(() => ({ draft, dispatch }), [draft])
 

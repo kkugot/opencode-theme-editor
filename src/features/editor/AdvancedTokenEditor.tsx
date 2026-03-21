@@ -1,4 +1,5 @@
 import type { ThemeTokenName, ThemeTokens } from '../../domain/theme/model'
+import { getColorInputValue, normalizeColorValue } from '../../domain/theme/color'
 
 const tokenSections: Array<{
   title: string
@@ -6,11 +7,11 @@ const tokenSections: Array<{
 }> = [
   {
     title: 'Core',
-    tokens: ['primary', 'secondary', 'accent', 'text', 'textMuted'],
+    tokens: ['primary', 'secondary', 'accent', 'text', 'textMuted', 'selectedListItemText'],
   },
   {
     title: 'Surfaces',
-    tokens: ['background', 'backgroundPanel', 'backgroundElement', 'border', 'borderActive', 'borderSubtle'],
+    tokens: ['background', 'backgroundPanel', 'backgroundElement', 'backgroundMenu', 'border', 'borderActive', 'borderSubtle'],
   },
   {
     title: 'Diffs',
@@ -34,6 +35,12 @@ type AdvancedTokenEditorProps = {
   onReset: (token: ThemeTokenName) => void
 }
 
+function formatTokenLabel(token: ThemeTokenName) {
+  return token
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/^./, (value) => value.toUpperCase())
+}
+
 export function AdvancedTokenEditor({
   resolvedTokens,
   derivedTokens,
@@ -52,6 +59,7 @@ export function AdvancedTokenEditor({
 
             <div className="advanced-grid">
               {section.tokens.map((token) => {
+                const tokenLabel = formatTokenLabel(token)
                 const overrideValue = overrides[token]
                 const isOverridden = overrideValue !== undefined
                 const isInSyncWithDerived =
@@ -62,14 +70,17 @@ export function AdvancedTokenEditor({
                 return (
                   <div key={token} className="advanced-field color-row advanced-row color-row-compact">
                     <div className="advanced-color-cell">
-                      <label className="color-swatch" aria-label={`${token} color swatch`}>
-                        <span className="color-swatch-surface" style={{ background: resolvedTokens[token] }} />
+                      <label
+                        className="semantic-generated-palette-chip advanced-color-well"
+                        aria-label={`${tokenLabel} color swatch`}
+                        style={{ background: normalizeColorValue(resolvedTokens[token]) ?? resolvedTokens[token] }}
+                      >
                         <input
                           id={colorInputId}
                           type="color"
-                          value={resolvedTokens[token]}
+                          value={getColorInputValue(resolvedTokens[token])}
                           onChange={(event) => onChange(token, event.target.value)}
-                          aria-label={`${token} color`}
+                          aria-label={`${tokenLabel} color`}
                         />
                       </label>
 
@@ -78,8 +89,8 @@ export function AdvancedTokenEditor({
                           type="button"
                           className="advanced-reset-icon"
                           onClick={() => onReset(token)}
-                          aria-label={`Reset ${token}`}
-                          title={`Reset ${token}`}
+                          aria-label={`Reset ${tokenLabel}`}
+                          title={`Reset ${tokenLabel}`}
                         >
                           ×
                         </button>
@@ -88,7 +99,7 @@ export function AdvancedTokenEditor({
 
                     <div className="color-row-copy">
                       <label className="color-row-label" htmlFor={colorInputId}>
-                        {token}
+                        {tokenLabel}
                       </label>
                     </div>
 
@@ -97,7 +108,7 @@ export function AdvancedTokenEditor({
                       className="color-value"
                       value={resolvedTokens[token]}
                       onChange={(event) => onChange(token, event.target.value)}
-                      aria-label={`${token} value`}
+                      aria-label={`${tokenLabel} value`}
                     />
                   </div>
                 )

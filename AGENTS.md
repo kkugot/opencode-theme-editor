@@ -2,23 +2,20 @@
 
 ## Purpose
 - Guidance for coding agents working in `opencode-theme-editor`.
-- Read this file first, then `CLAUDE.md`, then `.planning/` research docs.
+- Read this file first.
 - Treat this repo as an implemented Vite + React + TypeScript SPA (not planning-only).
+- Planning artifacts were removed for release cleanup; use `README.md` and the source tree as the canonical project context.
 
 ## Rule Files Inventory
-- `CLAUDE.md` exists and contains architecture and product constraints.
+- `CLAUDE.md` guidance is merged into this file.
 - No Cursor rules found in `.cursor/rules/`.
 - No `.cursorrules` file found.
 - No Copilot rules file found at `.github/copilot-instructions.md`.
 - If any of these appear later, merge their rules into this file.
 
 ## Read First For Non-Trivial Changes
-- `.planning/PROJECT.md`
-- `.planning/research/ARCHITECTURE.md`
-- `.planning/research/FEATURES.md`
-- `.planning/research/PITFALLS.md`
-- `.planning/research/OPENCODE_UI_AND_THEMES.md`
-- Relevant art direction docs under `.planning/`.
+- `README.md`
+- Relevant files in `src/domain/`, `src/state/`, `src/features/`, and `src/persistence/`
 
 ## Project Snapshot
 - App type: static, local-first SPA with browser-only persistence.
@@ -30,9 +27,28 @@
 - Keep `src/domain/` framework-agnostic; avoid UI logic in domain functions.
 - Keep one canonical draft model; do not make preview state source-of-truth.
 - Dark and light are sibling documents with independent overrides.
-- Export separate dark and light JSON files; no combined artifact workflow.
+- Support bundle export alongside separate dark and light JSON files.
 - Preview and export must consume the same resolved token pipeline.
 - Use IndexedDB for draft persistence, not `localStorage`.
+- Treat the product as a deterministic token editor, not a freeform design canvas.
+- Keep the app shell/system theme separate from the draft theme being edited.
+
+## Preview Fidelity Boundaries
+- Do not split preview and export token mapping into separate logic paths.
+- Do not hardcode ad hoc preview colors that bypass resolved token output.
+- Keep preview as a consumer of resolved model state, not a source-of-truth.
+- Maintain broad OpenCode surface coverage (terminal body, sidebar, prompt/composer, tool output, diffs, code blocks, warnings/errors, status/meta surfaces).
+
+## Implementation Order Priorities
+- Prefer this dependency order for large work:
+  1. domain model and export contract
+  2. derivation engine
+  3. central state and selectors
+  4. preview renderer and model mapping
+  5. semantic editor UX
+  6. advanced token editing
+  7. draft persistence and migration boundaries
+  8. preview coverage expansion and export hardening
 
 ## Source Tree Map
 - `src/domain/`: theme model, derivation, validation, export mapping.
@@ -51,12 +67,11 @@
 - Preview production build locally: `npm run preview`
 - Targeted lint (single file): `npx eslint src/path/to/file.tsx`
 - Targeted type check: `npx tsc -b`
-- Test suite command: not configured (`npm test` does not exist)
-- Single test command: not available yet (no test framework installed)
-- If tests are added, document both full-suite and single-test commands here.
+- Test suite command: `npm run test`
+- Single test command: `npx vitest run src/path/to/file.test.ts`
 
 ## CI, Deployment, and Release
-- CI: `.github/workflows/ci.yml` runs lint + build on PRs and pushes to `main`.
+- CI: `.github/workflows/ci.yml` runs lint + test + build on PRs and pushes to `main`.
 - Pages deploy: `.github/workflows/deploy-pages.yml` publishes `dist/` on `main` and manual runs.
 - Release: `.github/workflows/release.yml` runs on `v*` tags and creates GitHub Releases.
 - Pages base path is auto-resolved (`/` for `<owner>.github.io`, `/<repo>/` otherwise).
@@ -69,6 +84,7 @@
   - `npm run version:minor`
   - `npm run version:major`
 - These create local `v*` tags; push commit + tags to trigger release workflow.
+- Always bump `package.json` version before creating a new release tag or release PR.
 
 ## Agent Workflow Expectations
 - Read relevant code before changing conventions.
@@ -152,6 +168,5 @@
 - Update this file when workflow, tooling, or conventions change.
 
 ## Known Gaps
-- No automated test framework is currently installed.
-- No single-test command exists until a test runner is added.
+- No dedicated browser E2E test coverage yet.
 - No dedicated formatter is configured; preserve existing style manually.

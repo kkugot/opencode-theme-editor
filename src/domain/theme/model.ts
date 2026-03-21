@@ -10,6 +10,17 @@ export type SemanticGroupName =
   | 'warning'
   | 'danger'
 
+export const SEMANTIC_GROUP_NAMES = [
+  'canvas',
+  'panel',
+  'text',
+  'muted',
+  'accent',
+  'success',
+  'warning',
+  'danger',
+] as const satisfies SemanticGroupName[]
+
 export type ThemeTokens = {
   primary: string
   secondary: string
@@ -20,9 +31,11 @@ export type ThemeTokens = {
   info: string
   text: string
   textMuted: string
+  selectedListItemText: string
   background: string
   backgroundPanel: string
   backgroundElement: string
+  backgroundMenu: string
   border: string
   borderActive: string
   borderSubtle: string
@@ -64,6 +77,61 @@ export type ThemeTokens = {
 }
 
 export type ThemeTokenName = keyof ThemeTokens
+
+export const THEME_TOKEN_NAMES = [
+  'primary',
+  'secondary',
+  'accent',
+  'error',
+  'warning',
+  'success',
+  'info',
+  'text',
+  'textMuted',
+  'selectedListItemText',
+  'background',
+  'backgroundPanel',
+  'backgroundElement',
+  'backgroundMenu',
+  'border',
+  'borderActive',
+  'borderSubtle',
+  'diffAdded',
+  'diffRemoved',
+  'diffContext',
+  'diffHunkHeader',
+  'diffHighlightAdded',
+  'diffHighlightRemoved',
+  'diffAddedBg',
+  'diffRemovedBg',
+  'diffContextBg',
+  'diffLineNumber',
+  'diffAddedLineNumberBg',
+  'diffRemovedLineNumberBg',
+  'markdownText',
+  'markdownHeading',
+  'markdownLink',
+  'markdownLinkText',
+  'markdownCode',
+  'markdownBlockQuote',
+  'markdownEmph',
+  'markdownStrong',
+  'markdownHorizontalRule',
+  'markdownListItem',
+  'markdownListEnumeration',
+  'markdownImage',
+  'markdownImageText',
+  'markdownCodeBlock',
+  'syntaxComment',
+  'syntaxKeyword',
+  'syntaxFunction',
+  'syntaxVariable',
+  'syntaxString',
+  'syntaxNumber',
+  'syntaxType',
+  'syntaxOperator',
+  'syntaxPunctuation',
+] as const satisfies ThemeTokenName[]
 
 export type ThemeModeDraft = {
   semanticGroups: Record<SemanticGroupName, string>

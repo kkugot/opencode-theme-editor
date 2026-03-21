@@ -1,0 +1,4 @@
+import { COLOR_HUNT_POPULAR_PROVIDER } from './colorHuntPopular'
+import { COOLORS_TRENDING_PROVIDER } from './coolorsTrending'
+
+export const ONLINE_PALETTE_PROVIDERS = [COOLORS_TRENDING_PROVIDER, COLOR_HUNT_POPULAR_PROVIDER] as const

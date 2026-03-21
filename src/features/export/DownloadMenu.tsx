@@ -26,7 +26,7 @@ export function DownloadMenu({
   return (
     <details className="download-menu" ref={menuRef}>
       <summary className="download-menu-trigger">
-        Download Theme
+        Export
         <span className="download-menu-caret" aria-hidden="true">
           ▾
         </span>
@@ -56,7 +56,7 @@ export function DownloadMenu({
           className="download-menu-item"
           onClick={() => handleDownload(onDownloadCombined)}
         >
-          <span className="download-menu-item-label">Combined</span>
+          <span className="download-menu-item-label">Bundle</span>
           <span className="download-menu-item-file">{`${themeSlug}.json`}</span>
         </button>
       </div>

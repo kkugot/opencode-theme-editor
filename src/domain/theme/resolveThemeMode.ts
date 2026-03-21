@@ -1,26 +1,8 @@
 import type { ThemeMode, ThemeModeDraft, ThemeTokens } from './model'
-
-function mix(hex: string, amount: number, target: number) {
-  const value = Number.parseInt(hex.slice(1), 16)
-  const r = (value >> 16) & 0xff
-  const g = (value >> 8) & 0xff
-  const b = value & 0xff
-
-  const next = (channel: number) => Math.round(channel + (target - channel) * amount)
-
-  return `#${[next(r), next(g), next(b)].map((channel) => channel.toString(16).padStart(2, '0')).join('')}`
-}
-
-export function lighten(hex: string, amount: number) {
-  return mix(hex, amount, 255)
-}
-
-export function darken(hex: string, amount: number) {
-  return mix(hex, amount, 0)
-}
+import { darken, lighten, normalizeColorValue } from './color'
 
 function normalizeHex(value: string) {
-  return /^#[0-9a-f]{6}$/i.test(value) ? value : '#000000'
+  return normalizeColorValue(value) ?? '#000000'
 }
 
 function invertTowardMode(hex: string, targetMode: ThemeMode) {
@@ -79,9 +61,11 @@ export function resolveThemeMode(mode: ThemeModeDraft): ThemeTokens {
     info: lighten(semanticGroups.accent, 0.08),
     text: semanticGroups.text,
     textMuted: semanticGroups.muted,
+    selectedListItemText: semanticGroups.canvas,
     background: semanticGroups.canvas,
     backgroundPanel: semanticGroups.panel,
     backgroundElement,
+    backgroundMenu: backgroundElement,
     border,
     borderActive,
     borderSubtle,

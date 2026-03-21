@@ -4,7 +4,7 @@ import { resolveThemeMode } from '../domain/theme/resolveThemeMode'
 import { analyzeContrast } from '../domain/validation/analyzeContrast'
 import type { SemanticGroupName, ThemeDraft, ThemeMode, ThemeModeDraft, ThemeTokenName } from '../domain/theme/model'
 
-const semanticGroupLinkedTokens = {
+const semanticGroupDisplayTokens = {
   canvas: ['background'],
   panel: ['backgroundPanel'],
   text: ['text'],
@@ -15,8 +15,36 @@ const semanticGroupLinkedTokens = {
   danger: ['error'],
 } satisfies Record<SemanticGroupName, ThemeTokenName[]>
 
+const semanticGroupAffectedTokens = {
+  canvas: ['background', 'selectedListItemText'],
+  panel: ['backgroundPanel', 'backgroundElement', 'backgroundMenu', 'border', 'borderSubtle', 'diffContextBg', 'markdownHorizontalRule'],
+  text: ['text', 'markdownText', 'markdownCodeBlock', 'syntaxPunctuation'],
+  muted: ['textMuted', 'diffContext', 'diffLineNumber', 'syntaxComment'],
+  accent: [
+    'primary',
+    'secondary',
+    'accent',
+    'info',
+    'borderActive',
+    'diffHunkHeader',
+    'markdownHeading',
+    'markdownLink',
+    'markdownLinkText',
+    'markdownListItem',
+    'markdownListEnumeration',
+    'markdownImage',
+    'markdownImageText',
+    'syntaxKeyword',
+    'syntaxFunction',
+    'syntaxOperator',
+  ],
+  success: ['success', 'diffAdded', 'diffHighlightAdded', 'diffAddedBg', 'diffAddedLineNumberBg', 'markdownCode', 'syntaxString'],
+  warning: ['warning', 'markdownBlockQuote', 'markdownEmph', 'markdownStrong', 'syntaxNumber', 'syntaxType'],
+  danger: ['error', 'diffRemoved', 'diffHighlightRemoved', 'diffRemovedBg', 'diffRemovedLineNumberBg', 'syntaxVariable'],
+} satisfies Record<SemanticGroupName, ThemeTokenName[]>
+
 function selectSemanticGroupColor(modeDraft: ThemeModeDraft, group: SemanticGroupName) {
-  for (const token of semanticGroupLinkedTokens[group]) {
+  for (const token of semanticGroupDisplayTokens[group]) {
     const override = modeDraft.tokenOverrides[token]
 
     if (override !== undefined) {
@@ -63,8 +91,8 @@ export function selectEditorSemanticGroups(draft: ThemeDraft, mode: ThemeMode) {
   }
 }
 
-export function selectSemanticGroupLinkedTokens(group: SemanticGroupName) {
-  return semanticGroupLinkedTokens[group]
+export function selectSemanticGroupAffectedTokens(group: SemanticGroupName) {
+  return semanticGroupAffectedTokens[group]
 }
 
 export function selectPreviewModel(draft: ThemeDraft) {
