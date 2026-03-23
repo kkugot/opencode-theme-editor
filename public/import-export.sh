@@ -547,14 +547,55 @@ def parse_color(value: str):
     raise SystemExit(f'cannot encode unsupported color value: {value}')
 
 
+def try_parse_color(value: str):
+    try:
+        return parse_color(value)
+    except SystemExit:
+        return None
+
+
+def resolve_theme_token_color(value: str, defs: dict, token: str, visited_defs=None):
+    direct_color = try_parse_color(value)
+
+    if direct_color is not None:
+        return rgba_to_color(*direct_color)
+
+    if value not in defs:
+        raise SystemExit(f'token {token} must be a color literal, transparent, or a name from defs')
+
+    if visited_defs is None:
+        visited_defs = set()
+
+    if value in visited_defs:
+        raise SystemExit(f'token {token} has a circular defs reference at {value}')
+
+    next_value = defs[value]
+
+    if not isinstance(next_value, str):
+        raise SystemExit(f'defs.{value} must resolve to a string color value')
+
+    next_visited_defs = set(visited_defs)
+    next_visited_defs.add(value)
+
+    return resolve_theme_token_color(next_value, defs, token, next_visited_defs)
+
+
 def normalize_theme_file(data: dict):
     if not isinstance(data, dict):
         raise SystemExit('theme JSON must be an object')
 
     raw_theme = data.get('theme')
+    raw_defs = data.get('defs')
 
     if not isinstance(raw_theme, dict):
         raise SystemExit('theme JSON must contain a theme object')
+
+    if raw_defs is None:
+        defs = {}
+    elif isinstance(raw_defs, dict):
+        defs = raw_defs
+    else:
+        raise SystemExit('theme JSON defs must be an object when provided')
 
     normalized_theme = {}
 
@@ -580,12 +621,9 @@ def normalize_theme_file(data: dict):
         if not isinstance(dark, str) or not isinstance(light, str):
             raise SystemExit(f'theme token {token} must contain color strings')
 
-        dark_rgba = parse_color(dark)
-        light_rgba = parse_color(light)
-
         normalized_theme[token] = {
-            'dark': rgba_to_color(*dark_rgba),
-            'light': rgba_to_color(*light_rgba),
+            'dark': resolve_theme_token_color(dark, defs, token),
+            'light': resolve_theme_token_color(light, defs, token),
         }
 
     return {
