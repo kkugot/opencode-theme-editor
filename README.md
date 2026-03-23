@@ -15,8 +15,8 @@
 </p>
 
 <p align="center">
-  <video src="./public/opencode-theme-studio-480.mov" controls muted playsinline loop width="960">
-    <a href="./public/opencode-theme-studio-480.mov">Watch the OpenCode Theme Studio demo video</a>
+  <video src="./public/opencode-theme-studio-480-4x.mp4" controls muted playsinline loop width="960">
+    <a href="./public/opencode-theme-studio-480-4x.mp4">Watch the OpenCode Theme Studio demo video</a>
   </video>
 </p>
 
