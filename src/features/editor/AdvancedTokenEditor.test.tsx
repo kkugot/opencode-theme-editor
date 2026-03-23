@@ -18,18 +18,43 @@ describe('AdvancedTokenEditor', () => {
     const tokens = createTokens()
 
     render(
-      <AdvancedTokenEditor
-        resolvedTokens={tokens}
-        derivedTokens={tokens}
-        overrides={{}}
-        onChange={vi.fn()}
-        onReset={vi.fn()}
-      />,
+        <AdvancedTokenEditor
+          resolvedTokens={tokens}
+          derivedTokens={tokens}
+          overrides={{}}
+          manuallyEditedTokens={[]}
+          onChange={vi.fn()}
+          onReset={vi.fn()}
+        />,
     )
 
     const renderedValues = screen.getAllByRole('textbox').map((input) => (input as HTMLInputElement).value)
 
     expect(renderedValues).toHaveLength(THEME_TOKEN_NAMES.length)
     expect([...renderedValues].sort()).toEqual(Object.values(tokens).sort())
+  })
+
+  it('only shows reset controls for manually edited overrides', () => {
+    const resolvedTokens = createTokens()
+    const derivedTokens = createTokens()
+
+    resolvedTokens.primary = '#ff00aa'
+
+    render(
+      <AdvancedTokenEditor
+        resolvedTokens={resolvedTokens}
+        derivedTokens={derivedTokens}
+        overrides={{
+          primary: '#ff00aa',
+          secondary: '#00ffaa',
+        }}
+        manuallyEditedTokens={['primary']}
+        onChange={vi.fn()}
+        onReset={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: 'Reset Primary' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Reset Secondary' })).not.toBeInTheDocument()
   })
 })

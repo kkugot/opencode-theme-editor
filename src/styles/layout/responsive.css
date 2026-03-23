@@ -54,10 +54,12 @@
 @media (max-width: 1400px) {
   .preview-pane,
   .preview-stage {
-    overflow: clip;
+    overflow-x: clip;
+    overflow-y: visible;
   }
 
   .preview-stage {
+    --preview-shadow-space: 28px;
     justify-items: start;
     align-items: start;
   }
@@ -66,7 +68,7 @@
     --desktop-preview-scale: 0.75;
     min-height: 0;
     width: calc(100% / var(--desktop-preview-scale));
-    height: calc(100% / var(--desktop-preview-scale));
+    height: calc((100% - var(--preview-shadow-space)) / var(--desktop-preview-scale));
     transform: scale(var(--desktop-preview-scale));
     transform-origin: top left;
   }

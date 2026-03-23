@@ -49,6 +49,7 @@ type AdvancedTokenEditorProps = {
   resolvedTokens: ThemeTokens
   derivedTokens: ThemeTokens
   overrides: Partial<ThemeTokens>
+  manuallyEditedTokens: ThemeTokenName[]
   onChange: (token: ThemeTokenName, value: string) => void
   onReset: (token: ThemeTokenName) => void
 }
@@ -59,10 +60,34 @@ function formatTokenLabel(token: ThemeTokenName) {
     .replace(/^./, (value) => value.toUpperCase())
 }
 
+function UndoIcon() {
+  return (
+    <svg className="advanced-reset-icon-glyph" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M10 7.5 6 11.5l4 4"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M6.5 11.5H14a4.5 4.5 0 1 1 0 9h-2.5"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+    </svg>
+  )
+}
+
 export function AdvancedTokenEditor({
   resolvedTokens,
   derivedTokens,
   overrides,
+  manuallyEditedTokens,
   onChange,
   onReset,
 }: AdvancedTokenEditorProps) {
@@ -82,14 +107,14 @@ export function AdvancedTokenEditor({
                 const isOverridden = overrideValue !== undefined
                 const isInSyncWithDerived =
                   isOverridden && overrideValue.toLowerCase() === derivedTokens[token].toLowerCase()
-                const showReset = isOverridden && !isInSyncWithDerived
+                const showReset = manuallyEditedTokens.includes(token) && isOverridden && !isInSyncWithDerived
                 const colorInputId = `token-color-${token}`
 
                 return (
                   <div key={token} className="advanced-field color-row advanced-row color-row-compact">
                     <div className="advanced-color-cell">
                       <label
-                        className="semantic-generated-palette-chip advanced-color-well"
+                        className="semantic-generated-palette-chip semantic-generated-palette-chip-pill advanced-color-well"
                         aria-label={`${tokenLabel} color swatch`}
                         style={{ background: normalizeColorValue(resolvedTokens[token]) ?? resolvedTokens[token] }}
                       >
@@ -110,7 +135,7 @@ export function AdvancedTokenEditor({
                           aria-label={`Reset ${tokenLabel}`}
                           title={`Reset ${tokenLabel}`}
                         >
-                          ×
+                          <UndoIcon />
                         </button>
                       ) : null}
                     </div>

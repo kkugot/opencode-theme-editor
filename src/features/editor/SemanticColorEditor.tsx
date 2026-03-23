@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import type { RemixStrength } from '../../domain/presets/themePresets'
 import type { SemanticGroupName, ThemeMode } from '../../domain/theme/model'
 import {
   colorToHsl,
@@ -39,8 +40,19 @@ type SemanticColorEditorProps = {
   randomPalette: string[]
   onChange: (group: SemanticGroupName, value: string) => void
   onRandomize: () => void
+  onShuffleRandomize: (strength: RemixStrength) => void
+  onUndoGeneratedPalette: () => void
+  onUndoShuffleRandomize: () => void
+  canUndoGeneratedPalette: boolean
+  canUndoShuffleRandomize: boolean
   onChangeRandomPaletteColor: (index: number, value: string) => void
 }
+
+const REMIX_ACTIONS: Array<{ strength: RemixStrength; label: string; pips: 2 | 4 | 6 }> = [
+  { strength: 'subtle', label: 'Soft shuffle', pips: 2 },
+  { strength: 'balanced', label: 'Balanced shuffle', pips: 4 },
+  { strength: 'wild', label: 'Wild shuffle', pips: 6 },
+]
 
 const SUGGESTION_COUNT = 5
 
@@ -249,6 +261,47 @@ function sortPaletteByLightness(palette: string[]) {
   })
 }
 
+function DiceIcon({ pips }: { pips: 2 | 4 | 6 }) {
+  const pipMap: Record<2 | 4 | 6, Array<[number, number]>> = {
+    2: [
+      [8.5, 8.5],
+      [15.5, 15.5],
+    ],
+    4: [
+      [8.5, 8.5],
+      [15.5, 8.5],
+      [8.5, 15.5],
+      [15.5, 15.5],
+    ],
+    6: [
+      [8.5, 8],
+      [15.5, 8],
+      [8.5, 12],
+      [15.5, 12],
+      [8.5, 16],
+      [15.5, 16],
+    ],
+  }
+
+  return (
+    <svg className="semantic-random-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="4.75" y="4.75" width="14.5" height="14.5" rx="3.25" fill="none" stroke="currentColor" strokeWidth="1.7" />
+      {pipMap[pips].map(([cx, cy]) => (
+        <circle key={`${pips}-${cx}-${cy}`} cx={cx} cy={cy} r="1.08" fill="currentColor" />
+      ))}
+    </svg>
+  )
+}
+
+function UndoIcon() {
+  return (
+    <svg className="semantic-random-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M10 7.5 6 11.5l4 4" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
+      <path d="M6.5 11.5H14a4.5 4.5 0 1 1 0 9h-2.5" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" />
+    </svg>
+  )
+}
+
 function buildFoundationSuggestions(
   group: Exclude<SemanticGroupName, 'success' | 'warning' | 'danger'>,
   palette: string[],
@@ -356,6 +409,11 @@ export function SemanticColorEditor({
   randomPalette,
   onChange,
   onRandomize,
+  onShuffleRandomize,
+  onUndoGeneratedPalette,
+  onUndoShuffleRandomize,
+  canUndoGeneratedPalette,
+  canUndoShuffleRandomize,
   onChangeRandomPaletteColor,
 }: SemanticColorEditorProps) {
   const suggestionMap = useMemo(
@@ -365,41 +423,115 @@ export function SemanticColorEditor({
       ) as Record<SemanticGroupName, string[]>,
     [activeMode, randomPalette, semanticGroups],
   )
+  const randomPaletteRows = useMemo(() => {
+    if (randomPalette.length === 0) {
+      return [] as Array<Array<{ color: string; index: number }>>
+    }
+
+    if (randomPalette.length < 4) {
+      return [randomPalette.map((color, index) => ({ color, index }))]
+    }
+
+    const splitIndex = Math.ceil(randomPalette.length / 2)
+
+    return [
+      randomPalette.slice(0, splitIndex).map((color, index) => ({ color, index })),
+      randomPalette.slice(splitIndex).map((color, index) => ({ color, index: index + splitIndex })),
+    ]
+  }, [randomPalette])
 
   return (
     <section className="semantic-editor panel-card">
       <section className="editor-group semantic-editor-toolbar-group">
         <div className="editor-group-header semantic-editor-toolbar-header">
-          <p className="editor-group-label">Palette</p>
-
-          <div className="semantic-editor-actions">
-            <button type="button" className="semantic-random-button" onClick={onRandomize}>
-              Generate
-            </button>
-          </div>
+          <p className="editor-group-label">Color Palette</p>
         </div>
 
-        {randomPalette.length > 0 ? (
-          <div className="semantic-generated-palette" aria-label="Generated random palette">
-            {randomPalette.map((color, index) => (
-              <label
-                key={`generated-palette-${index}`}
-                className="semantic-generated-palette-chip"
-                style={{ background: normalizeColorValue(color) ?? color }}
-                title={color}
+        <p className="editor-group-caption semantic-editor-toolbar-caption">
+          Theme generation balances contrast, luminosity, and color relationships so surfaces, accents, and signals stay readable together. When you like the palette, throw the dice to shuffle the generated theme softly, harder, or completely insane.
+        </p>
+
+        <div className="semantic-generated-palette-row">
+          <div className="semantic-generated-controls">
+            <div className="semantic-random-pill-group semantic-random-generate-group" role="group" aria-label="Generate palette controls">
+              <button type="button" className="semantic-random-group-button semantic-random-generate-button" onClick={onRandomize}>
+                Generate
+              </button>
+
+              <button
+                type="button"
+                className="semantic-random-group-button"
+                aria-label="Undo generated palette"
+                title="Undo generated palette"
+                disabled={!canUndoGeneratedPalette}
+                onClick={onUndoGeneratedPalette}
               >
-                <input
-                  type="color"
-                  value={getColorInputValue(color)}
-                  aria-label={`Generated palette color ${index + 1}`}
-                  onChange={(event) => {
-                    onChangeRandomPaletteColor(index, event.target.value)
+                <UndoIcon />
+              </button>
+            </div>
+
+            <div className="semantic-random-pill-group semantic-random-button-group" role="group" aria-label="Shuffle palette generation">
+              {REMIX_ACTIONS.map((action) => (
+                <button
+                  key={action.strength}
+                  type="button"
+                  className="semantic-random-group-button"
+                  aria-label={action.label}
+                  title={action.label}
+                  onClick={() => {
+                    onShuffleRandomize(action.strength)
                   }}
-                />
-              </label>
-            ))}
+                >
+                  <DiceIcon pips={action.pips} />
+                </button>
+              ))}
+
+              <button
+                type="button"
+                className="semantic-random-group-button"
+                aria-label="Undo palette shuffle"
+                title="Undo palette shuffle"
+                disabled={!canUndoShuffleRandomize}
+                onClick={onUndoShuffleRandomize}
+              >
+                <UndoIcon />
+              </button>
+            </div>
           </div>
-        ) : null}
+
+          {randomPalette.length > 0 ? (
+            <div
+              className={
+                randomPaletteRows.length > 1
+                  ? 'semantic-generated-palette semantic-generated-palette-balanced'
+                  : 'semantic-generated-palette'
+              }
+              aria-label="Generated random palette"
+            >
+              {randomPaletteRows.map((paletteRow, rowIndex) => (
+                <div key={`generated-palette-row-${rowIndex}`} className="semantic-generated-palette-line">
+                  {paletteRow.map(({ color, index }) => (
+                    <label
+                      key={`generated-palette-${index}`}
+                      className="semantic-generated-palette-chip semantic-generated-palette-chip-pill"
+                      style={{ background: normalizeColorValue(color) ?? color }}
+                      title={color}
+                    >
+                      <input
+                        type="color"
+                        value={getColorInputValue(color)}
+                        aria-label={`Generated palette color ${index + 1}`}
+                        onChange={(event) => {
+                          onChangeRandomPaletteColor(index, event.target.value)
+                        }}
+                      />
+                    </label>
+                  ))}
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
       </section>
 
       <div className="editor-groups">

@@ -801,11 +801,13 @@ export function createSemanticModeSelectionFromPalette(
   options: {
     fallbackId?: string
     variationSeed?: number
+    remixStrength?: RemixStrength
   } = {},
 ) {
   const normalizedPalette = normalizePalette(palette)
   const fallbackId = options.fallbackId ?? `basic:${mode}:${normalizedPalette.join('|') || 'generated'}`
   const variationSeed = options.variationSeed ?? hashString(fallbackId)
+  const remixStrength = options.remixStrength ?? 'balanced'
 
   return {
     name: buildGeneratedPaletteThemeName({
@@ -814,7 +816,7 @@ export function createSemanticModeSelectionFromPalette(
     }),
     palette: normalizedPalette,
     variationSeed,
-    modeDraft: createModeDraftFromPalette(normalizedPalette, mode, getModeVariationSeed(variationSeed, mode), 'balanced'),
+    modeDraft: createModeDraftFromPalette(normalizedPalette, mode, getModeVariationSeed(variationSeed, mode), remixStrength),
   }
 }
 

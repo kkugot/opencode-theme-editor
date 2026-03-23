@@ -2,14 +2,12 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import {
   serializeThemeFile,
   type OpenCodeCombinedThemeFile,
-  type OpenCodeThemeFile,
 } from '../../domain/opencode/exportTheme'
 import type { ThemeMode, ThemeTokenName } from '../../domain/theme/model'
 import { parseJsonThemeFile, type JsonThemeModeUpdates } from './jsonThemeEditorParser'
 
 
 type JsonThemeEditorProps = {
-  themeFile: OpenCodeThemeFile
   combinedThemeFile: OpenCodeCombinedThemeFile
   tokenNames: ThemeTokenName[]
   activeMode: ThemeMode
@@ -64,22 +62,12 @@ function getCopyButtonA11yLabel(label: string) {
 
 
 export function JsonThemeEditor({
-  themeFile,
   combinedThemeFile,
   tokenNames,
   activeMode,
   onChange,
 }: JsonThemeEditorProps) {
-  const [format, setFormat] = useState<'single' | 'combined'>('single')
-  const formattedTheme = useMemo(
-    () =>
-      serializeThemeFile(
-        format === 'combined'
-          ? combinedThemeFile
-          : themeFile,
-      ).trimEnd(),
-    [combinedThemeFile, format, themeFile],
-  )
+  const formattedTheme = useMemo(() => serializeThemeFile(combinedThemeFile).trimEnd(), [combinedThemeFile])
   const [jsonText, setJsonText] = useState(formattedTheme)
   const [parseError, setParseError] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
@@ -132,7 +120,6 @@ export function JsonThemeEditor({
     }
 
     setParseError(null)
-    setFormat(parsed.value.format)
     onChange(parsed.value.modeThemes)
   }
 
@@ -150,10 +137,12 @@ export function JsonThemeEditor({
   }
 
   return (
-    <section className="json-editor panel-card">
-      <p className="json-editor-status" data-state={parseError ? 'error' : 'ready'} role="status" aria-live="polite">
-        {parseError ?? 'Changes apply while the JSON stays valid'}
-      </p>
+    <div className="json-editor">
+      {parseError ? (
+        <p className="json-editor-status" data-state="error" role="status" aria-live="polite">
+          {parseError}
+        </p>
+      ) : null}
 
       <div className="json-editor-shell">
         <button
@@ -186,14 +175,13 @@ export function JsonThemeEditor({
                 return
               }
 
-              setFormat(parsed.value.format)
-              setJsonText(serializeThemeFile(parsed.value.themeFile).trimEnd())
+              setJsonText(formattedTheme)
             }}
             onChange={(event) => handleTextChange(event.target.value)}
             aria-label="Theme JSON editor"
           />
         </label>
       </div>
-    </section>
+    </div>
   )
 }

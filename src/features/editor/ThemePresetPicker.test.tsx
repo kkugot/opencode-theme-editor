@@ -71,6 +71,7 @@ describe('ThemePresetPicker', () => {
   it('shows top search, style filter, and compact random controls', () => {
     const { container } = renderPicker()
     const filterCombo = container.querySelector('.theme-preset-filter-combo')
+    const toolbarControls = container.querySelector('.theme-preset-toolbar-controls')
 
     expect(screen.getByRole('button', { name: 'Random' })).toBeInTheDocument()
     expect(screen.getByLabelText('Search presets')).toBeInTheDocument()
@@ -78,7 +79,7 @@ describe('ThemePresetPicker', () => {
     expect(screen.getByPlaceholderText('Search 2 presets')).toBeInTheDocument()
     expect(screen.queryByText('Generate first, then fine-tune once the preview feels close.')).not.toBeInTheDocument()
     expect(filterCombo?.children[1]).toHaveClass('theme-preset-style-filter')
-    expect(filterCombo?.children[2]).toHaveClass('theme-preset-random-slot')
+    expect(toolbarControls?.children[1]).toHaveClass('theme-preset-random-slot')
   })
 
   it('lists all styles, built-ins, then community styles in the filter dropdown', () => {
@@ -93,11 +94,12 @@ describe('ThemePresetPicker', () => {
 
     expect(options).toEqual([
       { label: 'All styles', value: 'all-styles', disabled: false },
-      { label: '----------------', value: 'opencode-divider', disabled: true },
-      { label: 'OpenCode built-ins', value: 'opencode-builtins', disabled: false },
-      { label: '----------------', value: 'community-divider', disabled: true },
+      { label: 'OpenCode', value: 'opencode-builtins', disabled: false },
       { label: 'Warm', value: 'warm', disabled: false },
     ])
+
+    expect(styleSelect.querySelector('hr.opencode-divider')).toBeInTheDocument()
+    expect(styleSelect.querySelector('hr.community-divider')).toBeInTheDocument()
   })
 
   it('applies a random visible preset from the filtered list', () => {
@@ -121,6 +123,15 @@ describe('ThemePresetPicker', () => {
     expect(screen.queryByText('Aura')).not.toBeInTheDocument()
 
     fireEvent.click(builtinToggle)
+
+    expect(screen.getByText('Aura')).toBeInTheDocument()
+  })
+
+  it('auto-expands built-in presets when a built-in preset is selected', () => {
+    renderPicker({
+      selectedPresetId: 'aura',
+      selectedPresetPreview: buildPreset(),
+    })
 
     expect(screen.getByText('Aura')).toBeInTheDocument()
   })

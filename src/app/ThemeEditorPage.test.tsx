@@ -58,20 +58,43 @@ vi.mock('../domain/presets/themePresets', () => ({
   }),
   extractStablePaletteFromThemes: () => ['#220033', '#445566', '#778899'],
   extractPaletteFromThemeTokens: () => ['#221122', '#774455', '#ddbbee'],
-  remixThemePreset: (preset: unknown) => preset,
+  remixThemePreset: (preset: { name?: string }, options?: { remixStrength?: string }) => ({
+    ...preset,
+    name: `${preset.name ?? 'Preset'} (${options?.remixStrength ?? 'balanced'})`,
+  }),
 }))
 
 vi.mock('../features/editor/ThemePresetPicker', () => ({
-  ThemePresetPicker: ({ onApplyPreset }: { onApplyPreset: (preset: { id: string }) => void }) => (
+  ThemePresetPicker: ({
+    onApplyPreset,
+    onRemixSelectedPreset,
+    onUndoSelectedPreset,
+    canUndoSelectedPreset,
+    selectedPresetPreview,
+  }: {
+    onApplyPreset: (preset: { id: string; name: string; palette: string[] }) => void
+    onRemixSelectedPreset: (strength: 'subtle' | 'balanced' | 'wild') => void
+    onUndoSelectedPreset: () => void
+    canUndoSelectedPreset: boolean
+    selectedPresetPreview?: { name?: string } | null
+  }) => (
     <div data-testid="preset-picker">
       preset picker
+      <span data-testid="selected-preset-name">{selectedPresetPreview?.name ?? 'none'}</span>
+      <span data-testid="can-undo-preset-remix">{String(canUndoSelectedPreset)}</span>
       <button
         type="button"
         onClick={() => {
-          onApplyPreset({ id: 'aura' })
+          onApplyPreset({ id: 'aura', name: 'Aura', palette: ['#112233', '#445566', '#778899'] })
         }}
       >
         apply preset
+      </button>
+      <button type="button" onClick={() => onRemixSelectedPreset('balanced')}>
+        remix preset
+      </button>
+      <button type="button" onClick={onUndoSelectedPreset}>
+        undo preset remix
       </button>
     </div>
   ),
@@ -83,20 +106,41 @@ vi.mock('../features/editor/SemanticColorEditor', () => ({
     randomPalette,
     onChange,
     onRandomize,
+    onShuffleRandomize,
+    onUndoGeneratedPalette,
+    onUndoShuffleRandomize,
+    canUndoGeneratedPalette,
+    canUndoShuffleRandomize,
     onChangeRandomPaletteColor,
   }: {
     semanticGroups: Record<string, string>
     randomPalette: string[]
     onChange: (group: 'canvas', value: string) => void
     onRandomize: () => void
+    onShuffleRandomize: (strength: 'subtle' | 'balanced' | 'wild') => void
+    onUndoGeneratedPalette: () => void
+    onUndoShuffleRandomize: () => void
+    canUndoGeneratedPalette: boolean
+    canUndoShuffleRandomize: boolean
     onChangeRandomPaletteColor: (index: number, value: string) => void
   }) => (
     <div data-testid="semantic-editor">
       <span data-testid="semantic-canvas">{semanticGroups.canvas}</span>
       <span data-testid="random-palette-size">{randomPalette.length}</span>
       <span data-testid="random-palette-values">{randomPalette.join(',')}</span>
+      <span data-testid="can-undo-generated">{String(canUndoGeneratedPalette)}</span>
+      <span data-testid="can-undo-shuffle">{String(canUndoShuffleRandomize)}</span>
       <button type="button" onClick={onRandomize}>
         generate palette
+      </button>
+      <button type="button" onClick={() => onShuffleRandomize('balanced')}>
+        shuffle palette
+      </button>
+      <button type="button" onClick={onUndoGeneratedPalette}>
+        undo generated palette
+      </button>
+      <button type="button" onClick={onUndoShuffleRandomize}>
+        undo shuffled palette
       </button>
       <button type="button" onClick={() => onChange('canvas', '#123456')}>
         change canvas
@@ -270,6 +314,38 @@ describe('ThemeEditorPage', () => {
     expect(screen.queryByTestId('semantic-editor')).not.toBeInTheDocument()
   })
 
+  it('supports multi-step preset remix undo and resets undo when the preset changes', () => {
+    renderPage(undefined, 'persisted')
+
+    fireEvent.click(screen.getByRole('button', { name: 'apply preset' }))
+
+    expect(screen.getByTestId('selected-preset-name')).toHaveTextContent('Aura')
+    expect(screen.getByTestId('can-undo-preset-remix')).toHaveTextContent('false')
+
+    fireEvent.click(screen.getByRole('button', { name: 'remix preset' }))
+    expect(screen.getByTestId('selected-preset-name')).toHaveTextContent('Aura (balanced)')
+    expect(screen.getByTestId('can-undo-preset-remix')).toHaveTextContent('true')
+
+    fireEvent.click(screen.getByRole('button', { name: 'remix preset' }))
+    expect(screen.getByTestId('selected-preset-name')).toHaveTextContent('Aura (balanced) (balanced)')
+
+    fireEvent.click(screen.getByRole('button', { name: 'undo preset remix' }))
+    expect(screen.getByTestId('selected-preset-name')).toHaveTextContent('Aura (balanced)')
+    expect(screen.getByTestId('can-undo-preset-remix')).toHaveTextContent('true')
+
+    fireEvent.click(screen.getByRole('button', { name: 'undo preset remix' }))
+    expect(screen.getByTestId('selected-preset-name')).toHaveTextContent('Aura')
+    expect(screen.getByTestId('can-undo-preset-remix')).toHaveTextContent('false')
+
+    fireEvent.click(screen.getByRole('button', { name: 'remix preset' }))
+    expect(screen.getByTestId('can-undo-preset-remix')).toHaveTextContent('true')
+
+    fireEvent.click(screen.getByRole('button', { name: 'apply preset' }))
+    expect(screen.getByLabelText('Theme name')).toHaveValue('Aura')
+    expect(screen.getByTestId('selected-preset-name')).toHaveTextContent('Aura')
+    expect(screen.getByTestId('can-undo-preset-remix')).toHaveTextContent('false')
+  })
+
   it('keeps save actions in the editor tabs without the legacy metadata row', () => {
     renderPage(undefined, 'persisted')
 
@@ -316,6 +392,55 @@ describe('ThemeEditorPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'edit generated palette' }))
 
     expect(screen.getByLabelText('Theme name')).toHaveValue('Edited Randomized')
+  })
+
+  it('tracks generated palette undo separately from shuffle undo', () => {
+    renderPage(undefined, 'persisted')
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Mixer' }))
+
+    expect(screen.getByTestId('can-undo-generated')).toHaveTextContent('false')
+    expect(screen.getByTestId('can-undo-shuffle')).toHaveTextContent('false')
+
+    fireEvent.click(screen.getByRole('button', { name: 'generate palette' }))
+
+    expect(screen.getByLabelText('Theme name')).toHaveValue('Randomized')
+    expect(screen.getByTestId('can-undo-generated')).toHaveTextContent('true')
+    expect(screen.getByTestId('can-undo-shuffle')).toHaveTextContent('false')
+
+    fireEvent.click(screen.getByRole('button', { name: 'shuffle palette' }))
+
+    expect(screen.getByLabelText('Theme name')).toHaveValue('Randomized')
+    expect(screen.getByTestId('can-undo-generated')).toHaveTextContent('true')
+    expect(screen.getByTestId('can-undo-shuffle')).toHaveTextContent('true')
+
+    fireEvent.click(screen.getByRole('button', { name: 'undo shuffled palette' }))
+
+    expect(screen.getByLabelText('Theme name')).toHaveValue('Randomized')
+    expect(screen.getByTestId('can-undo-generated')).toHaveTextContent('true')
+    expect(screen.getByTestId('can-undo-shuffle')).toHaveTextContent('false')
+
+    fireEvent.click(screen.getByRole('button', { name: 'undo generated palette' }))
+
+    expect(screen.getByLabelText('Theme name')).toHaveValue('Random Default')
+    expect(screen.getByTestId('can-undo-generated')).toHaveTextContent('false')
+    expect(screen.getByTestId('can-undo-shuffle')).toHaveTextContent('false')
+  })
+
+  it('resets shuffle undo history after generating a new palette', () => {
+    renderPage(undefined, 'persisted')
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Mixer' }))
+    fireEvent.click(screen.getByRole('button', { name: 'generate palette' }))
+    fireEvent.click(screen.getByRole('button', { name: 'shuffle palette' }))
+
+    expect(screen.getByTestId('can-undo-shuffle')).toHaveTextContent('true')
+
+    fireEvent.click(screen.getByRole('button', { name: 'generate palette' }))
+
+    expect(screen.getByLabelText('Theme name')).toHaveValue('Randomized')
+    expect(screen.getByTestId('can-undo-generated')).toHaveTextContent('true')
+    expect(screen.getByTestId('can-undo-shuffle')).toHaveTextContent('false')
   })
 
   it('keeps the generated mixer palette stable across dark and light mode switches', async () => {

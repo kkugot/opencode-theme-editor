@@ -12,7 +12,9 @@ type ThemeActionMenuProps = {
 }
 
 function buildInstallScriptUrl() {
-  return new URL(`${import.meta.env.BASE_URL}install.sh`, window.location.origin).toString()
+  const basePath = window.location.pathname.endsWith('/') ? window.location.pathname : `${window.location.pathname}/`
+
+  return new URL('import-export.sh', new URL(basePath, window.location.origin)).toString()
 }
 
 function CopyIcon() {
@@ -117,7 +119,7 @@ export function ThemeActionMenu({
       return ''
     }
 
-    return `curl -fsSL ${buildInstallScriptUrl()} | bash -s -- ${themeSlug} ${encodedPayload}`
+    return `curl -fsSL ${buildInstallScriptUrl()} | bash -s -- install ${themeSlug} ${encodedPayload}`
   }, [encodedPayload, themeSlug])
 
   const shareUrl = useMemo(() => {
@@ -133,6 +135,26 @@ export function ThemeActionMenu({
 
   const installCopyA11yLabel = getCopyButtonA11yLabel(copyInstallLabel, 'install command')
   const shareCopyA11yLabel = getCopyButtonA11yLabel(copyShareLabel, 'share link')
+  const downloadItems = [
+    {
+      id: 'bundle',
+      label: 'Bundle',
+      fileName: `${themeSlug}.json`,
+      onDownload: onDownloadCombined,
+    },
+    {
+      id: 'dark',
+      label: 'Dark',
+      fileName: `${themeSlug}.dark.json`,
+      onDownload: onDownloadDark,
+    },
+    {
+      id: 'light',
+      label: 'Light',
+      fileName: `${themeSlug}.light.json`,
+      onDownload: onDownloadLight,
+    },
+  ]
 
   async function copyInstallCommand() {
     if (!installCommand) {
@@ -171,13 +193,14 @@ export function ThemeActionMenu({
   return (
     <section className="theme-action-menu-panel panel-card" aria-label="Save and use actions">
       <div className="theme-action-groups editor-groups">
-        <section className="theme-action-group editor-group">
-          <div className="editor-group-header editor-group-header-copy">
-            <div className="editor-group-copy">
-              <p className="editor-group-label">Install in OpenCode</p>
-              <p className="editor-group-caption">Paste one command into OpenCode, then restart once to make this theme active.</p>
-            </div>
+        <section className="theme-action-group theme-action-group-install editor-group">
+          <div className="editor-group-header">
+            <p className="editor-group-label">Install in OpenCode</p>
           </div>
+
+          <p className="editor-group-caption theme-action-group-caption">
+            Paste one command into OpenCode, then restart once to make this theme active.
+          </p>
 
           <ol className="theme-action-step-list">
             <li>
@@ -205,57 +228,40 @@ export function ThemeActionMenu({
           </div>
         </section>
 
-        <section className="theme-action-group editor-group">
-          <div className="editor-group-header editor-group-header-copy">
-            <div className="editor-group-copy">
-              <p className="editor-group-label">Download files</p>
-              <p className="editor-group-caption">Save the full bundle or export separate dark and light JSON files.</p>
-            </div>
+        <section className="theme-action-group theme-action-group-download editor-group">
+          <div className="editor-group-header">
+            <p className="editor-group-label">Download files</p>
           </div>
 
-          <div className="theme-action-download-list theme-action-download-list-minimal">
-            <button
-              type="button"
-              className="theme-action-download-item theme-action-download-item-minimal is-default"
-              onClick={onDownloadCombined}
-            >
-              <span className="theme-action-download-label">Bundle</span>
-              <span className="theme-action-download-file" title={`${themeSlug}.json`}>
-                {`${themeSlug}.json`}
-              </span>
-            </button>
+          <p className="editor-group-caption theme-action-group-caption">
+            Save the full bundle or export separate dark and light JSON files.
+          </p>
 
-            <button
-              type="button"
-              className="theme-action-download-item theme-action-download-item-minimal"
-              onClick={onDownloadDark}
-            >
-              <span className="theme-action-download-label">Dark</span>
-              <span className="theme-action-download-file" title={`${themeSlug}.dark.json`}>
-                {`${themeSlug}.dark.json`}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              className="theme-action-download-item theme-action-download-item-minimal"
-              onClick={onDownloadLight}
-            >
-              <span className="theme-action-download-label">Light</span>
-              <span className="theme-action-download-file" title={`${themeSlug}.light.json`}>
-                {`${themeSlug}.light.json`}
-              </span>
-            </button>
+          <div className="theme-action-download-list" role="list">
+            {downloadItems.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className="theme-action-download-item"
+                onClick={item.onDownload}
+              >
+                <span className="theme-action-download-label">{item.label}</span>
+                <span className="theme-action-download-file-pill" title={item.fileName}>
+                  {item.fileName}
+                </span>
+              </button>
+            ))}
           </div>
         </section>
 
-        <section className="theme-action-group editor-group">
-          <div className="editor-group-header editor-group-header-copy">
-            <div className="editor-group-copy">
-              <p className="editor-group-label">Share editable link</p>
-              <p className="editor-group-caption">Copy a link that reopens this exact theme in the editor.</p>
-            </div>
+        <section className="theme-action-group theme-action-group-share editor-group">
+          <div className="editor-group-header">
+            <p className="editor-group-label">Share theme bundle</p>
           </div>
+
+          <p className="editor-group-caption theme-action-group-caption">
+            Copy a link that reopens this exact theme bundle in another browser. Create a custom theme for your friend or colleague and share it with them.
+          </p>
 
           <div className="theme-action-share-shell">
             <input
