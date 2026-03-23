@@ -86,6 +86,11 @@ TOKEN_NAMES = [
     'syntaxPunctuation',
 ]
 
+OPTIONAL_THEME_TOKEN_FALLBACKS = {
+    'selectedListItemText': 'background',
+    'backgroundMenu': 'backgroundElement',
+}
+
 
 def slugify(value: str) -> str:
     cleaned = re.sub(r'[^a-z0-9]+', '-', value.strip().lower())
@@ -554,7 +559,7 @@ def try_parse_color(value: str):
         return None
 
 
-def resolve_theme_token_color(value: str, defs: dict, token: str, visited_defs=None):
+def resolve_theme_token_color(value: str, defs: dict, raw_theme: dict, token: str, visited_defs=None, visited_theme=None):
     direct_color = try_parse_color(value)
 
     if direct_color is not None:
@@ -566,18 +571,41 @@ def resolve_theme_token_color(value: str, defs: dict, token: str, visited_defs=N
     if visited_defs is None:
         visited_defs = set()
 
-    if value in visited_defs:
-        raise SystemExit(f'token {token} has a circular defs reference at {value}')
+    if visited_theme is None:
+        visited_theme = set()
 
-    next_value = defs[value]
+    if value in defs:
+        if value in visited_defs:
+            raise SystemExit(f'token {token} has a circular defs reference at {value}')
 
-    if not isinstance(next_value, str):
-        raise SystemExit(f'defs.{value} must resolve to a string color value')
+        next_value = defs[value]
 
-    next_visited_defs = set(visited_defs)
-    next_visited_defs.add(value)
+        if not isinstance(next_value, str):
+            raise SystemExit(f'defs.{value} must resolve to a string color value')
 
-    return resolve_theme_token_color(next_value, defs, token, next_visited_defs)
+        next_visited_defs = set(visited_defs)
+        next_visited_defs.add(value)
+
+        return resolve_theme_token_color(next_value, defs, raw_theme, token, next_visited_defs, visited_theme)
+
+    if value in raw_theme:
+        if value in visited_theme:
+            raise SystemExit(f'token {token} has a circular theme reference at {value}')
+
+        next_value = raw_theme[value]
+
+        if isinstance(next_value, dict):
+            raise SystemExit(f'theme reference {value} must resolve to a string color value in this context')
+
+        if not isinstance(next_value, str):
+            raise SystemExit(f'theme reference {value} must resolve to a string color value')
+
+        next_visited_theme = set(visited_theme)
+        next_visited_theme.add(value)
+
+        return resolve_theme_token_color(next_value, defs, raw_theme, token, visited_defs, next_visited_theme)
+
+    raise SystemExit(f'token {token} must be a color literal, transparent, or a name from defs')
 
 
 def normalize_theme_file(data: dict):
@@ -602,6 +630,15 @@ def normalize_theme_file(data: dict):
     for token in TOKEN_NAMES:
         value = raw_theme.get(token)
 
+        if value is None:
+            fallback_token = OPTIONAL_THEME_TOKEN_FALLBACKS.get(token)
+
+            if fallback_token is not None:
+                value = raw_theme.get(fallback_token)
+
+        if value is None:
+            raise SystemExit(f'theme token {token} is missing')
+
         if isinstance(value, dict):
             dark = value.get('dark')
             light = value.get('light')
@@ -622,8 +659,8 @@ def normalize_theme_file(data: dict):
             raise SystemExit(f'theme token {token} must contain color strings')
 
         normalized_theme[token] = {
-            'dark': resolve_theme_token_color(dark, defs, token),
-            'light': resolve_theme_token_color(light, defs, token),
+            'dark': resolve_theme_token_color(dark, defs, raw_theme, token),
+            'light': resolve_theme_token_color(light, defs, raw_theme, token),
         }
 
     return {
