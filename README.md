@@ -8,16 +8,10 @@
 
 <p align="center">
   <a href="https://kkugot.github.io/opencode-theme-studio/"><strong>Launch the app</strong></a>
-  ·
-  <a href="https://github.com/kkugot/opencode-theme-studio">GitHub</a>
-  ·
-  <a href="https://opencode.ai/docs/themes/#custom-themes">OpenCode theme docs</a>
 </p>
 
 <p align="center">
-  <video src="./public/opencode-theme-studio-480-4x.mp4" controls muted playsinline loop width="960">
     <a href="./public/opencode-theme-studio-480-4x.mp4">Watch the OpenCode Theme Studio demo video</a>
-  </video>
 </p>
 
 ## Why people use it
@@ -34,16 +28,17 @@
 | Stage | Best for |
 | --- | --- |
 | Presets | Start from OpenCode built-ins, curated palettes, or remixed color directions |
-| Basic | Adjust semantic groups like canvas, text, accent, success, warning, and danger |
-| Full | Fine-tune individual OpenCode tokens |
-| JSON | Edit the exported theme shape directly with validation and live preview |
-| Save | Download files, copy the install command, or share an editable link |
+| Mixer | Generate color palettes, adjust basic semantic groups like canvas, text, accent, success, warning, and danger |
+| Tuner | Fine-tune individual OpenCode tokens, there are plenty of them |
+| Export | Download files, copy the install command, or share an editable link |
+| JSON {…} | Import yur opencode theme, Edit the generated theme json directly with validation and live preview |
+
 
 ## Quick start
 
 1. Open the app and name your theme.
 2. Pick a preset or randomize a palette.
-3. Refine colors in `Basic`, `Full`, or `JSON`.
+3. Refine colors manually or with thre levels of color shuffle. they all follow contrast ratio rules
 4. Flip between dark and light to tune both modes.
 5. Open `Save` to download files, copy a share link, or generate the OpenCode install command.
 6. Open `{...}` to import an existing local OpenCode theme or edit the full bundle JSON directly.
