@@ -26,23 +26,6 @@
   box-sizing: border-box;
 }
 
-.console-sidebar-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: calc(var(--terminal-font-size) * 1.8);
-  font-weight: 700;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.16em;
-}
-
-.console-sidebar-link-icon {
-  width: calc(var(--terminal-font-size) * 1.7);
-  height: calc(var(--terminal-font-size) * 1.7);
-  flex: 0 0 auto;
-}
-
 .console-sidebar-intro {
   margin: 0;
   font-size: calc(var(--terminal-font-size) * 1.1);

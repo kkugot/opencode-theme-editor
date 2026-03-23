@@ -4,7 +4,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 38px;
+  min-height: 40px;
   padding: 0 16px;
   overflow: visible;
   background: var(--terminal-titlebar-bg);
@@ -58,8 +58,9 @@
 .console-macos-title {
   min-width: 0;
   overflow: hidden;
+  transform: translateY(2px);
   font-family: var(--font-body);
-  font-size: 0.78rem;
+  font-size: 0.84rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   line-height: 1;
@@ -90,7 +91,42 @@
   right: 12px;
   bottom: 0;
   display: inline-flex;
-  align-items: stretch;
-  gap: 0;
+  align-items: center;
+  gap: 10px;
   transform: none;
+}
+
+.console-macos-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--terminal-titlebar-text);
+  font-family: var(--font-body);
+  font-size: 0.84rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  text-decoration: none;
+  opacity: 0.66;
+  transition: opacity 160ms ease, color 160ms ease;
+}
+
+.console-macos-link span {
+  display: inline-block;
+  transform: translateY(2px);
+}
+
+.console-macos-link:hover {
+  opacity: 0.92;
+}
+
+.console-macos-link:focus-visible {
+  outline: none;
+  opacity: 1;
+}
+
+.console-macos-link-icon {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
 }

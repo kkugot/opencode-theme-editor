@@ -16,14 +16,19 @@ describe('SemanticColorEditor', () => {
     const onChange = vi.fn()
 
     render(
-      <SemanticColorEditor
-        activeMode="dark"
-        semanticGroups={draft.modes.dark.semanticGroups}
-        randomPalette={['#19291f', '#355446', '#64d3b0', '#deef8c']}
-        onChange={onChange}
-        onRandomize={vi.fn()}
-        onChangeRandomPaletteColor={vi.fn()}
-      />,
+        <SemanticColorEditor
+          activeMode="dark"
+          semanticGroups={draft.modes.dark.semanticGroups}
+          randomPalette={['#19291f', '#355446', '#64d3b0', '#deef8c']}
+          onChange={onChange}
+          onRandomize={vi.fn()}
+          onShuffleRandomize={vi.fn()}
+          onUndoGeneratedPalette={vi.fn()}
+          onUndoShuffleRandomize={vi.fn()}
+          canUndoGeneratedPalette={false}
+          canUndoShuffleRandomize={false}
+          onChangeRandomPaletteColor={vi.fn()}
+        />,
     )
 
     const canvasChoices = within(screen.getByLabelText('canvas palette choices')).getAllByRole('button')
@@ -36,14 +41,19 @@ describe('SemanticColorEditor', () => {
     const draft = createDefaultThemeDraft()
 
     render(
-      <SemanticColorEditor
-        activeMode="light"
-        semanticGroups={draft.modes.light.semanticGroups}
-        randomPalette={['#f6f5ea', '#8ec3f4', '#6e9fc8', '#365777']}
-        onChange={vi.fn()}
-        onRandomize={vi.fn()}
-        onChangeRandomPaletteColor={vi.fn()}
-      />,
+        <SemanticColorEditor
+          activeMode="light"
+          semanticGroups={draft.modes.light.semanticGroups}
+          randomPalette={['#f6f5ea', '#8ec3f4', '#6e9fc8', '#365777']}
+          onChange={vi.fn()}
+          onRandomize={vi.fn()}
+          onShuffleRandomize={vi.fn()}
+          onUndoGeneratedPalette={vi.fn()}
+          onUndoShuffleRandomize={vi.fn()}
+          canUndoGeneratedPalette={false}
+          canUndoShuffleRandomize={false}
+          onChangeRandomPaletteColor={vi.fn()}
+        />,
     )
 
     const canvasSuggestionColors = getSuggestionColors('canvas palette choices')
@@ -62,14 +72,19 @@ describe('SemanticColorEditor', () => {
     }
 
     render(
-      <SemanticColorEditor
-        activeMode="dark"
-        semanticGroups={semanticGroups}
-        randomPalette={['#f6f5ea', '#8ec3f4', '#6e9fc8', '#365777']}
-        onChange={vi.fn()}
-        onRandomize={vi.fn()}
-        onChangeRandomPaletteColor={vi.fn()}
-      />,
+        <SemanticColorEditor
+          activeMode="dark"
+          semanticGroups={semanticGroups}
+          randomPalette={['#f6f5ea', '#8ec3f4', '#6e9fc8', '#365777']}
+          onChange={vi.fn()}
+          onRandomize={vi.fn()}
+          onShuffleRandomize={vi.fn()}
+          onUndoGeneratedPalette={vi.fn()}
+          onUndoShuffleRandomize={vi.fn()}
+          canUndoGeneratedPalette={false}
+          canUndoShuffleRandomize={false}
+          onChangeRandomPaletteColor={vi.fn()}
+        />,
     )
 
     const successColors = getSuggestionColors('success palette choices')
@@ -86,14 +101,19 @@ describe('SemanticColorEditor', () => {
     const onChange = vi.fn()
 
     render(
-      <SemanticColorEditor
-        activeMode="dark"
-        semanticGroups={draft.modes.dark.semanticGroups}
-        randomPalette={['#19291f', '#355446', '#64d3b0', '#deef8c']}
-        onChange={onChange}
-        onRandomize={vi.fn()}
-        onChangeRandomPaletteColor={vi.fn()}
-      />,
+        <SemanticColorEditor
+          activeMode="dark"
+          semanticGroups={draft.modes.dark.semanticGroups}
+          randomPalette={['#19291f', '#355446', '#64d3b0', '#deef8c']}
+          onChange={onChange}
+          onRandomize={vi.fn()}
+          onShuffleRandomize={vi.fn()}
+          onUndoGeneratedPalette={vi.fn()}
+          onUndoShuffleRandomize={vi.fn()}
+          canUndoGeneratedPalette={false}
+          canUndoShuffleRandomize={false}
+          onChangeRandomPaletteColor={vi.fn()}
+        />,
     )
 
     fireEvent.change(screen.getByLabelText('canvas color'), {
@@ -110,5 +130,41 @@ describe('SemanticColorEditor', () => {
 
     expect(onChange).toHaveBeenNthCalledWith(1, 'canvas', '#123456')
     expect(onChange).toHaveBeenNthCalledWith(2, 'success', '#4fd675')
+  })
+
+  it('shows generation guidance and mixer shuffle controls', () => {
+    const draft = createDefaultThemeDraft()
+    const onRandomize = vi.fn()
+    const onShuffleRandomize = vi.fn()
+    const onUndoGeneratedPalette = vi.fn()
+    const onUndoShuffleRandomize = vi.fn()
+
+    render(
+      <SemanticColorEditor
+        activeMode="dark"
+        semanticGroups={draft.modes.dark.semanticGroups}
+        randomPalette={['#19291f', '#355446', '#64d3b0', '#deef8c']}
+        onChange={vi.fn()}
+        onRandomize={onRandomize}
+        onShuffleRandomize={onShuffleRandomize}
+        onUndoGeneratedPalette={onUndoGeneratedPalette}
+        onUndoShuffleRandomize={onUndoShuffleRandomize}
+        canUndoGeneratedPalette
+        canUndoShuffleRandomize
+        onChangeRandomPaletteColor={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText(/balances contrast, luminosity, and color relationships/i)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Generate' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Undo generated palette' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Balanced shuffle' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Undo palette shuffle' }))
+
+    expect(onRandomize).toHaveBeenCalledOnce()
+    expect(onUndoGeneratedPalette).toHaveBeenCalledOnce()
+    expect(onShuffleRandomize).toHaveBeenCalledWith('balanced')
+    expect(onUndoShuffleRandomize).toHaveBeenCalledOnce()
   })
 })

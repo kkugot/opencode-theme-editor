@@ -9,7 +9,9 @@ type InstallThemeCommandProps = {
 }
 
 function buildInstallScriptUrl() {
-  return new URL(`${import.meta.env.BASE_URL}install.sh`, window.location.origin).toString()
+  const basePath = window.location.pathname.endsWith('/') ? window.location.pathname : `${window.location.pathname}/`
+
+  return new URL('import-export.sh', new URL(basePath, window.location.origin)).toString()
 }
 
 export function InstallThemeCommand({ themeSlug, themeFile }: InstallThemeCommandProps) {
@@ -62,7 +64,7 @@ export function InstallThemeCommand({ themeSlug, themeFile }: InstallThemeComman
       return ''
     }
 
-    return `curl -fsSL ${buildInstallScriptUrl()} | bash -s -- ${themeSlug} ${encodedPayload}`
+    return `curl -fsSL ${buildInstallScriptUrl()} | bash -s -- install ${themeSlug} ${encodedPayload}`
   }, [encodedPayload, themeSlug])
 
   const shareUrl = useMemo(() => {

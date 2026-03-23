@@ -28,12 +28,13 @@ type PresetStyleOption = {
   value: string
   label: string
   disabled?: boolean
+  kind?: 'option' | 'divider'
 }
 
 const ALL_STYLE_FILTER = 'all-styles'
 const BUILTIN_GROUP_ID = 'opencode'
 const BUILTIN_STYLE_FILTER = 'opencode-builtins'
-const BUILTIN_STYLE_FILTER_LABEL = 'OpenCode built-ins'
+const BUILTIN_STYLE_FILTER_LABEL = 'OpenCode'
 const BUILTIN_STYLE_FILTER_DIVIDER = 'opencode-divider'
 const COMMUNITY_STYLE_FILTER_DIVIDER = 'community-divider'
 
@@ -101,6 +102,16 @@ function easeOutCubic(value: number) {
 
 function getPresetStyleTokens(preset: ThemePreset) {
   return getPresetCategoryTokens(preset.metaLabel, preset.tags).map(normalizePresetStyleValue)
+}
+
+function getGroupIdForPreset(preset: ThemePreset) {
+  if (preset.source === 'opencode') {
+    return BUILTIN_GROUP_ID
+  }
+
+  const title = getPresetStyleLabel(preset) ?? 'Other'
+
+  return `category:${normalizePresetStyleValue(title)}`
 }
 
 function buildThumbnailStyle(tokens: ThemeTokens) {
@@ -242,6 +253,17 @@ export function ThemePresetPicker(props: ThemePresetPickerProps) {
   const scrollAnimationFrameRef = useRef<number | null>(null)
   const presetItemRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const normalizedSearchValue = searchValue.trim().toLowerCase()
+  const selectedPreset = useMemo(() => {
+    if (selectedPresetPreview) {
+      return selectedPresetPreview
+    }
+
+    if (!selectedPresetId) {
+      return null
+    }
+
+    return presets.find((preset) => preset.id === selectedPresetId) ?? null
+  }, [presets, selectedPresetId, selectedPresetPreview])
 
   useEffect(() => {
     return () => {
@@ -286,13 +308,13 @@ export function ThemePresetPicker(props: ThemePresetPickerProps) {
 
     if (hasBuiltinPresets) {
       nextOptions.push(
-        { value: BUILTIN_STYLE_FILTER_DIVIDER, label: '----------------', disabled: true },
+        { value: BUILTIN_STYLE_FILTER_DIVIDER, label: '', disabled: true, kind: 'divider' },
         { value: BUILTIN_STYLE_FILTER, label: BUILTIN_STYLE_FILTER_LABEL },
       )
     }
 
     if (communityStyleOptions.length > 0) {
-      nextOptions.push({ value: COMMUNITY_STYLE_FILTER_DIVIDER, label: '----------------', disabled: true })
+      nextOptions.push({ value: COMMUNITY_STYLE_FILTER_DIVIDER, label: '', disabled: true, kind: 'divider' })
       nextOptions.push(...communityStyleOptions)
     }
 
@@ -313,6 +335,26 @@ export function ThemePresetPicker(props: ThemePresetPickerProps) {
       setStyleFilter(ALL_STYLE_FILTER)
     }
   }, [selectableStyleOptions, styleFilter])
+
+  useEffect(() => {
+    if (!selectedPreset) {
+      return
+    }
+
+    const groupId = getGroupIdForPreset(selectedPreset)
+
+    setCollapsedGroupIds((current) => {
+      if (!current.has(groupId)) {
+        return current
+      }
+
+      const next = new Set(current)
+
+      next.delete(groupId)
+
+      return next
+    })
+  }, [selectedPreset])
 
   const styleScopedPresets = useMemo(() => {
     const hasStyleFilter = styleFilter !== ALL_STYLE_FILTER
@@ -433,16 +475,6 @@ export function ThemePresetPicker(props: ThemePresetPickerProps) {
     })
   }
 
-  function getGroupIdForPreset(preset: ThemePreset) {
-    if (preset.source === 'opencode') {
-      return BUILTIN_GROUP_ID
-    }
-
-    const title = getPresetStyleLabel(preset) ?? 'Other'
-
-    return `category:${normalizePresetStyleValue(title)}`
-  }
-
   function scrollPresetIntoView(presetId: string) {
     requestAnimationFrame(() => {
       const presetItem = presetItemRefs.current[presetId]
@@ -539,40 +571,46 @@ export function ThemePresetPicker(props: ThemePresetPickerProps) {
 
   const toolbar = (
     <div ref={toolbarRef} className="theme-preset-toolbar">
-      <div className="theme-preset-filter-combo">
-        <div className="theme-preset-search-slot">
-          <input
-            type="search"
-            className="theme-preset-search-input"
-            value={searchValue}
-            placeholder={searchPlaceholder}
-            spellCheck={false}
-            aria-label="Search presets"
-            onChange={(event) => {
-              setSearchValue(event.target.value)
-            }}
-          />
+      <div className="theme-preset-toolbar-controls">
+        <div className="theme-preset-filter-combo">
+          <div className="theme-preset-search-slot">
+            <input
+              type="search"
+              className="theme-preset-search-input"
+              value={searchValue}
+              placeholder={searchPlaceholder}
+              spellCheck={false}
+              aria-label="Search presets"
+              onChange={(event) => {
+                setSearchValue(event.target.value)
+              }}
+            />
+          </div>
+
+          <label className="theme-preset-style-filter">
+            <select
+              className="theme-preset-style-select"
+              value={styleFilter}
+              aria-label="Filter presets by style"
+              onChange={(event) => {
+                setStyleFilter(event.target.value)
+              }}
+            >
+              {styleOptions.map((option) =>
+                option.kind === 'divider' ? (
+                  <hr key={option.value} className={`theme-preset-style-divider ${option.value}`} />
+                ) : (
+                  <option key={option.value} value={option.value} disabled={option.disabled}>
+                    {option.label}
+                  </option>
+                ),
+              )}
+            </select>
+          </label>
         </div>
 
-        <label className="theme-preset-style-filter">
-          <select
-            className="theme-preset-style-select"
-            value={styleFilter}
-            aria-label="Filter presets by style"
-            onChange={(event) => {
-              setStyleFilter(event.target.value)
-            }}
-          >
-            {styleOptions.map((option) => (
-              <option key={option.value} value={option.value} disabled={option.disabled}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
         <div className="theme-preset-random-slot">
-          <button type="button" className="theme-random-button theme-random-button-inline" onClick={applyRandomVisiblePreset}>
+          <button type="button" className="theme-random-button" onClick={applyRandomVisiblePreset}>
             Random
           </button>
         </div>
@@ -648,12 +686,12 @@ export function ThemePresetPicker(props: ThemePresetPickerProps) {
 
                         {isSelected ? (
                           <div className="theme-preset-option-actions">
-                            <div className="theme-preset-remix-group" role="group" aria-label="Preset remix strength">
+                            <div className="theme-preset-action-group" role="group" aria-label="Preset actions">
                               {REMIX_ACTIONS.map((action) => (
                                 <button
                                   key={action.strength}
                                   type="button"
-                                  className="theme-preset-remix-die"
+                                  className="theme-preset-action-segment"
                                   aria-label={`${action.label} remix preset`}
                                   title={action.label}
                                   disabled={!canRemixSelectedPreset}
@@ -664,19 +702,19 @@ export function ThemePresetPicker(props: ThemePresetPickerProps) {
                                   <DiceIcon pips={action.strength === 'subtle' ? 2 : action.strength === 'balanced' ? 4 : 6} />
                                 </button>
                               ))}
+                              <button
+                                type="button"
+                                className="theme-preset-action-segment"
+                                aria-label="Undo preset remix"
+                                title="Undo"
+                                disabled={!canUndoSelectedPreset}
+                                onClick={() => {
+                                  onUndoSelectedPreset()
+                                }}
+                              >
+                                <UndoIcon />
+                              </button>
                             </div>
-
-                            <button
-                              type="button"
-                              className="theme-preset-action-button"
-                              aria-label="Undo preset remix"
-                              disabled={!canUndoSelectedPreset}
-                              onClick={() => {
-                                onUndoSelectedPreset()
-                              }}
-                            >
-                              <UndoIcon />
-                            </button>
                           </div>
                         ) : null}
                       </div>

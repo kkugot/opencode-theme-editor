@@ -35,8 +35,10 @@
 }
 
 .advanced-row {
-  grid-template-columns: 28px minmax(0, 1fr) max-content;
-  column-gap: 8px;
+  grid-template-columns: 46px minmax(0, 1fr) max-content;
+  column-gap: 10px;
+  min-height: 34px;
+  padding: 0;
 }
 
 .color-row-copy {
@@ -115,15 +117,21 @@
 
 .advanced-color-cell {
   position: relative;
-  display: block;
+  display: flex;
+  align-items: center;
   justify-self: start;
-  width: 28px;
+  width: 46px;
   height: 28px;
   overflow: visible;
 }
 
 .advanced-color-well {
   justify-self: start;
+}
+
+.advanced-color-cell .advanced-color-well {
+  width: 46px;
+  height: 22px;
 }
 
 .color-value {
@@ -194,28 +202,29 @@
 
 .advanced-reset-icon {
   position: absolute;
-  left: -18px;
+  left: -19px;
   top: 50%;
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
   padding: 0;
   border: 0;
   border-radius: 999px;
-  background: var(--advanced-reset-bg);
-  color: var(--advanced-reset-color);
-  font-size: 0.69rem;
-  font-weight: 600;
+  background: transparent;
+  color: color-mix(in srgb, var(--text-soft) 74%, var(--text-muted) 26%);
   line-height: 1;
   transform: translateY(-50%);
-  box-shadow: none;
-  opacity: 0.88;
+  opacity: 0.96;
   transition: background-color 150ms ease, color 150ms ease, opacity 150ms ease, box-shadow 150ms ease;
 }
 
 .advanced-row:hover .advanced-reset-icon,
 .advanced-reset-icon:hover {
-  background: var(--advanced-reset-bg-hover);
-  color: var(--advanced-reset-color);
-  box-shadow: none;
+  color: var(--text);
   opacity: 1;
+}
+
+.advanced-reset-icon-glyph {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
 }

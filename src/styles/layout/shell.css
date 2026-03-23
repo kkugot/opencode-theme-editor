@@ -74,23 +74,25 @@
 }
 
 .preview-stage {
+  --preview-shadow-space: 0px;
   position: relative;
   display: grid;
   justify-items: stretch;
   min-height: 0;
   height: 100%;
-  padding: 0;
+  padding: 0 0 var(--preview-shadow-space);
   border-radius: 0;
   background: transparent;
   box-shadow: none;
   overflow: visible;
+  box-sizing: border-box;
 }
 
 .preview-stage > .preview-surface {
   width: min(100%, var(--shell-preview-max-width));
   max-width: var(--shell-preview-max-width);
   min-height: 0;
-  height: 100%;
+  height: calc(100% - var(--preview-shadow-space));
 }
 
 .section-copy {

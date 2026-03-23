@@ -44,7 +44,7 @@ describe('JsonThemeEditor', () => {
         text: '#aabbcc',
       }),
     )
-    expect(screen.getByRole('status')).toHaveTextContent('Changes apply while the JSON stays valid')
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
 
   it('applies a valid combined edit and resolves defs references', () => {
@@ -156,10 +156,15 @@ describe('JsonThemeEditor', () => {
       ...props.themeFile.theme,
       text: '#ABC',
     }
-    const expectedFormatted = serializeThemeFile(exportThemeFile({
-      ...props.themeFile.theme,
-      text: '#aabbcc',
-    })).trimEnd()
+    const expectedFormatted = serializeThemeFile(exportCombinedThemeFile(
+      {
+        ...props.themeFile.theme,
+        text: '#aabbcc',
+      },
+      Object.fromEntries(
+        Object.entries(props.combinedThemeFile.theme).map(([token, value]) => [token, value.light]),
+      ) as ThemeTokens,
+    )).trimEnd()
 
     function ControlledEditor() {
       const [darkTheme, setDarkTheme] = useState<ThemeTokens>(props.themeFile.theme)
@@ -172,7 +177,6 @@ describe('JsonThemeEditor', () => {
       return (
         <JsonThemeEditor
           {...props}
-          themeFile={exportThemeFile(darkTheme)}
           combinedThemeFile={exportCombinedThemeFile(darkTheme, lightTheme)}
           onChange={(modeThemes) => {
             props.onChange(modeThemes)
